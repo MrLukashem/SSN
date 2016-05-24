@@ -52,7 +52,7 @@ public class InputHandler {
             }
 
             float answer = inputs.remove(inputs.size() - 1);
-            content.add(new TrainingInput<>((List<Float>)inputs.clone() /* don't push ref, allocate new memory*/,
+            content.add(new TrainingInput<>((List<Float>)inputs.clone() /* don't push ref, allocate new memory.*/,
                     (int)answer));
         }
 
