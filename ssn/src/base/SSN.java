@@ -1,6 +1,7 @@
 package base;
 
 import com.sun.istack.internal.NotNull;
+import train.TrainingInput;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,8 @@ public class SSN {
     protected List<INeuron> mInputsNeurons;
     protected List<INeuron> mHiddenNeurons;
     protected List<INeuron> mOutputsNeurons;
+
+    protected float LEARNING_CONSTANT = 0.1f;
 
     private void initConnections(List<INeuron> from, List<INeuron> to, float w) {
         for (INeuron toNeuron : to) {
@@ -51,6 +54,10 @@ public class SSN {
         init(nInput, nHidden, nOutput, iw);
     }
 
+    public void setLearningConstant(float newValue) {
+        LEARNING_CONSTANT = newValue;
+    }
+
     public float pushInput(@NotNull List<Float> input) {
         if (input.size() < mInputsNeurons.size()) {
             throw new IllegalArgumentException();
@@ -69,5 +76,40 @@ public class SSN {
         }
 
         return result;
+    }
+
+    public void trainMe(List<TrainingInput<Float> > trainingInputs) {
+        for (TrainingInput<Float> ti : trainingInputs) {
+            float ssnAnswer = pushInput(ti.getInputs());
+            float delta = ssnAnswer * (1 - ssnAnswer) * (ti.getExpectedOutput() - ssnAnswer);
+
+            List<Connection> connections = mOutputsNeurons.get(0).getConnections();
+            for (Connection connection : connections) {
+                float output = connection.getFrom().getOutput();
+                float dWeight = output * delta;
+
+                connection.updateWeight(dWeight * LEARNING_CONSTANT);
+            }
+
+            for (INeuron neuron : mHiddenNeurons) {
+                connections = neuron.getConnections();
+                float sum = 1.0f;
+
+                /*
+                for (Connection connection : connections) {
+                    sum += connection.getWeight() * ssnAnswer;
+                } */
+
+                for (Connection connection : connections) {
+                    float output = neuron.getOutput();
+                    float dHidden = output * (1 - output);
+                    dHidden *= sum;
+
+                    INeuron from = connection.getFrom();
+                    float dWeight = from.getOutput() * dHidden;
+                    connection.updateWeight(dWeight);
+                }
+            }
+        }
     }
 }

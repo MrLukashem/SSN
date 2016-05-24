@@ -48,6 +48,10 @@ public class Neuron implements INeuron {
         mConnections.add(connection);
     }
 
+    public List<Connection> getConnections() {
+        return mConnections;
+    }
+
     public void setThreshold(float threshold) {
         mIsThreshold = true;
         mThreshold = threshold;

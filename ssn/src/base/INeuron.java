@@ -1,5 +1,7 @@
 package base;
 
+import java.util.List;
+
 /**
  * Created by mrlukashem on 24.05.16.
  */
@@ -8,4 +10,5 @@ public interface INeuron {
     float getOutput();
     void input(float input);
     float compute();
+    List<Connection> getConnections();
 }
