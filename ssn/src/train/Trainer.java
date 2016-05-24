@@ -11,7 +11,7 @@ import java.util.List;
  * Created by mrlukashem on 22.05.16.
  */
 public class Trainer {
-    private Trainer() {
+ /*   private Trainer() {
         mError = (output, eoutput) -> output - eoutput;
     }
 
@@ -21,6 +21,8 @@ public class Trainer {
             new ArrayList<>();
 
     private Error mError;
+
+    private float LEARNING_CONSTANT = 0.1f;
 
     private List<Float> calculateDeltas(@NotNull List<Float> inputs, float c, int error) {
         List<Float> deltas = new LinkedList<>();
@@ -37,7 +39,7 @@ public class Trainer {
                 neuron.setInput(input.getInputs());
                 int error = mError.calculate(neuron.compute(), input.getExpectedOutput());
 
-                neuron.updateWeights(calculateDeltas(input.getInputs(), /*TODO: change this constant*/ 0.01f, error));
+                neuron.updateWeights(calculateDeltas(input.getInputs(), LEARNING_CONSTANT, error));
             }
         }
     }
@@ -77,7 +79,15 @@ public class Trainer {
         mError = errorFunction;
     }
 
+    public void setLearningConstant(float learningConstant) {
+        LEARNING_CONSTANT = learningConstant;
+    }
+
+    public float getLearningConstant() {
+        return LEARNING_CONSTANT;
+    }
+
     public interface Error {
         int calculate(int output, int expectedOutput);
-    }
+    } */
 }
