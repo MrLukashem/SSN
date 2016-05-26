@@ -1,6 +1,5 @@
 package io;
 
-import base.InputNeuron;
 import com.sun.istack.internal.NotNull;
 import train.TrainingInput;
 
@@ -15,11 +14,11 @@ public class InputHandler {
     protected File mHandle;
     protected ContentReceiver mReceiver;
 
-    protected String mSplittingChar = ";";
+    protected String mSplittingChar = "\\s+|\\t+|\\r+";
 
     // TODO: we can create async handler.
     public interface ContentReceiver {
-        void handler(List<TrainingInput<Float> > content);
+        void handler(List<TrainingInput<Double> > content);
     }
 
     public InputHandler(@NotNull String fileName) throws IOException {
@@ -38,22 +37,23 @@ public class InputHandler {
         BufferedReader reader = new BufferedReader(new FileReader(mHandle));
 
         String line;
-        List<TrainingInput<Float> > content = new ArrayList<>();
-        ArrayList<Float> inputs = new ArrayList<>();
+        List<TrainingInput<Double> > content = new ArrayList<>();
+        ArrayList<Double> inputs = new ArrayList<>();
         while((line = reader.readLine()) != null) {
             String[] result = line.split(mSplittingChar);
-            if (result.length != 34 /* temporary hardcoded number of features value.*/) {
+            if (result.length != 32 /* temporary hardcoded number of features value.*/) {
                 throw new IOException();
             }
 
             for (String feature /* includes expected result also.*/: result) {
-                Float convertedFeature = Float.valueOf(feature);
+                Double convertedFeature = Double.valueOf(feature);
                 inputs.add(convertedFeature);
             }
 
-            float answer = inputs.remove(inputs.size() - 1);
-            content.add(new TrainingInput<>((List<Float>)inputs.clone() /* don't push ref, allocate new memory.*/,
+            double answer = inputs.remove(inputs.size() - 1);
+            content.add(new TrainingInput<>((List<Double>)inputs.clone() /* don't push ref, allocate new memory.*/,
                     (int)answer));
+            inputs.clear();
         }
 
         // trigger client's callback.

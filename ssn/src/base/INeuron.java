@@ -7,8 +7,10 @@ import java.util.List;
  */
 public interface INeuron {
     void addConnection(Connection connection);
-    float getOutput();
-    void input(float input);
-    float compute();
+    double getOutput();
+    void input(double input);
+    double compute();
     List<Connection> getConnections();
+    void setThreshold(double threshold);
+    boolean hasThreshold();
 }

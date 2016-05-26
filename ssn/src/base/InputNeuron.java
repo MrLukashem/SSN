@@ -8,7 +8,7 @@ public class InputNeuron extends Neuron {
         super();
     }
 
-    public InputNeuron(float threshold) {
+    public InputNeuron(double threshold) {
         super(threshold);
     }
 }

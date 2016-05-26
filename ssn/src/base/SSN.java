@@ -1,6 +1,7 @@
 package base;
 
 import com.sun.istack.internal.NotNull;
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import train.TrainingInput;
 
 import java.util.ArrayList;
@@ -14,18 +15,24 @@ public class SSN {
     protected List<INeuron> mHiddenNeurons;
     protected List<INeuron> mOutputsNeurons;
 
-    protected float LEARNING_CONSTANT = 0.1f;
+    protected double LEARNING_CONSTANT = .1;
 
-    private void initConnections(List<INeuron> from, List<INeuron> to, float w) {
+    private double getRandomWeight() {
+        return Math.random() * 4.0 - 2.0;
+    }
+
+    private void initConnections(List<INeuron> from, List<INeuron> to) {
         for (INeuron toNeuron : to) {
             for (INeuron fromNeuron : from) {
-                Connection connection = new Connection(fromNeuron, toNeuron, w);
-                toNeuron.addConnection(connection);
+                if (!toNeuron.hasThreshold()) {
+                    Connection connection = new Connection(fromNeuron, toNeuron, getRandomWeight());
+                    toNeuron.addConnection(connection);
+                }
             }
         }
     }
 
-    private void init(int nInput, int nHidden, int nOutput, float iw) {
+    private void init(int nInput, int nHidden, int nOutput) {
         mInputsNeurons = new ArrayList<>(nInput);
         mHiddenNeurons = new ArrayList<>(nHidden);
         mOutputsNeurons = new ArrayList<>(nOutput);
@@ -33,83 +40,139 @@ public class SSN {
         for (int i = 0; i < nInput; i++) {
             mInputsNeurons.add(new InputNeuron());
         }
+        mInputsNeurons.get(mInputsNeurons.size() - 1)
+                .setThreshold(.0);
 
         for (int i = 0; i < nHidden; i++) {
-            mHiddenNeurons.add(new HiddenNeuron());
+            HiddenNeuron neuron = new HiddenNeuron();
+            neuron.setActivationFunction(x -> 1.0 / (1.0 + Math.exp(-x)));
+            mHiddenNeurons.add(neuron);
         }
+        mHiddenNeurons.get(mHiddenNeurons.size() - 1)
+                .setThreshold(.0);
 
         for (int i = 0; i < nOutput; i++) {
-            mOutputsNeurons.add(new OutputNeuron());
+            OutputNeuron neuron = new OutputNeuron();
+            neuron.setActivationFunction(x -> 1.0 / (1.0 + Math.exp(-x)));
+            mOutputsNeurons.add(neuron);
         }
 
-        initConnections(mInputsNeurons, mHiddenNeurons, iw);
-        initConnections(mHiddenNeurons, mOutputsNeurons, iw);
+        initConnections(mInputsNeurons, mHiddenNeurons);
+        //initConnections(mHiddenNeurons, mInputsNeurons, iw);
+        for (INeuron hidden : mHiddenNeurons) {
+            for (INeuron output : mOutputsNeurons) {
+                Connection connection = new Connection(hidden, output, getRandomWeight());
+                hidden.addConnection(connection);
+            }
+        }
+        for (INeuron hidden : mHiddenNeurons) {
+            for (INeuron input : mInputsNeurons) {
+                Connection connection = new Connection(input, hidden, getRandomWeight());
+                hidden.addConnection(connection);
+            }
+        }
+        initConnections(mHiddenNeurons, mOutputsNeurons);
     }
 
     public SSN(int nInput, int nHidden, int nOutput) {
-        init(nInput, nHidden, nOutput, (float)Math.random());
+        init(nInput, nHidden, nOutput);
     }
 
-    public SSN(int nInput, int nHidden, int nOutput, float iw) {
-        init(nInput, nHidden, nOutput, iw);
-    }
-
-    public void setLearningConstant(float newValue) {
+    public void setLearningConstant(double newValue) {
         LEARNING_CONSTANT = newValue;
     }
 
-    public float pushInput(@NotNull List<Float> input) {
-        if (input.size() < mInputsNeurons.size()) {
+    public List<Double> pushInput(@NotNull List<Double> input) {
+        if (input.size() + 1 /* + bias */< mInputsNeurons.size()) {
             throw new IllegalArgumentException();
         }
 
-        for (int i = 0; i < mInputsNeurons.size(); i++) {
+        for (int i = 0; i < mInputsNeurons.size() - 1; i++) {
             mInputsNeurons.get(i).input(input.get(i));
         }
 
         mHiddenNeurons.stream().forEach(neuron -> neuron.compute());
         mOutputsNeurons.stream().forEach(neuron -> neuron.compute());
 
-        float result = .0f;
-        for (INeuron outputNeuron : mOutputsNeurons) {
-            result += outputNeuron.getOutput();
-        }
-
+        List<Double> result = new ArrayList<>();
+        mOutputsNeurons.stream().forEach(neuron -> result.add(neuron.getOutput()));
         return result;
     }
 
-    public void trainMe(List<TrainingInput<Float> > trainingInputs) {
-        for (TrainingInput<Float> ti : trainingInputs) {
-            float ssnAnswer = pushInput(ti.getInputs());
-            float delta = ssnAnswer * (1 - ssnAnswer) * (ti.getExpectedOutput() - ssnAnswer);
+    public void trainMe(List<TrainingInput<Double> > trainingInputs) {
+            for (int i = 0; i < 1000; i++) {
+                int randomIndex = (int)Math.abs(Math.random() * (double)(trainingInputs.size() - 1));
+                TrainingInput<Double> ti = trainingInputs.get(randomIndex);
+                List<Double> ssnAnswers = pushInput(ti.getInputs());
 
-            List<Connection> connections = mOutputsNeurons.get(0).getConnections();
-            for (Connection connection : connections) {
-                float output = connection.getFrom().getOutput();
-                float dWeight = output * delta;
+                // for every output neuron back propagation.
+                int outputNeuronNumber = 1;
+                for (Double ssnAnswer : ssnAnswers) {
+                    double expectedOutput = .0;
+                    if (ti.getExpectedOutput() == outputNeuronNumber) {
+                        expectedOutput = 1.0;
+                    }
 
-                connection.updateWeight(dWeight * LEARNING_CONSTANT);
-            }
+                    // f'(x) * (1 - f'(x)) * e - y
+                    double factor = (1 - ssnAnswer) * ssnAnswer;
+                    double delta = factor * (expectedOutput - ssnAnswer);
 
-            for (INeuron neuron : mHiddenNeurons) {
-                connections = neuron.getConnections();
-                float sum = 1.0f;
+                    INeuron outputNeuron = mOutputsNeurons.get(outputNeuronNumber - 1);
+                    List<Connection> connections = outputNeuron.getConnections();
+                    for (Connection connection : connections) {
+                        double output = connection.getFrom().getOutput();
+                        double dWeight = ( output * delta * LEARNING_CONSTANT);
+                        connection.updateWeight(dWeight);
+                    }
 
-                /*
-                for (Connection connection : connections) {
-                    sum += connection.getWeight() * ssnAnswer;
-                } */
+                    for (INeuron neuron : mHiddenNeurons) {
+                        connections = neuron.getConnections();
+                        double sum = .0;
 
-                for (Connection connection : connections) {
-                    float output = neuron.getOutput();
-                    float dHidden = output * (1 - output);
-                    dHidden *= sum;
+                        for (Connection connection : connections) {
+                            if (connection.getFrom() == neuron && connection.getTo() == outputNeuron) {
+                                sum += connection.getWeight() * delta;
+                            }
+                        }
 
-                    INeuron from = connection.getFrom();
-                    float dWeight = from.getOutput() * dHidden;
-                    connection.updateWeight(dWeight);
+                        for (Connection connection : connections) {
+                            if (connection.getTo() == neuron) {
+                                double answerHidden = neuron.getOutput();
+                                double deltaHidden = sum * answerHidden * (1 - answerHidden);
+
+                                INeuron from = connection.getFrom();
+                                double dWeight = from.getOutput() * deltaHidden * LEARNING_CONSTANT;
+                                connection.updateWeight(dWeight);
+                            }
+                        }
+                    }
+                    // switch to next output neuron.
+                    outputNeuronNumber++;
                 }
             }
+    }
+
+    public void showSSNOnConsole() {
+        for(INeuron hNeuron : mHiddenNeurons) {
+            hNeuron.getConnections().stream().forEach(x -> {
+                if (x.getTo() == hNeuron) {
+                    System.out.print(" " + x.getWeight());
+                }
+            });
+            System.out.println("");
+        }
+
+        System.out.println("");
+        System.out.println("");
+        System.out.println("");
+
+        for(INeuron oNeuron : mOutputsNeurons) {
+            oNeuron.getConnections().stream().forEach(x -> {
+                if (x.getTo() == oNeuron) {
+                    System.out.print(" " + x.getWeight());
+                }
+            });
+            System.out.println("");
         }
     }
 }

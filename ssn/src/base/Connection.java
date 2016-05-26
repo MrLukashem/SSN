@@ -8,14 +8,14 @@ import com.sun.istack.internal.NotNull;
 public class Connection {
     INeuron mRefFrom;
     INeuron mRefTo;
-    float mWeight;
+    double mWeight;
 
     public Connection(@NotNull INeuron from, @NotNull INeuron to) {
         mRefFrom = from;
         mRefFrom = to;
     }
 
-    public Connection(@NotNull INeuron from, @NotNull INeuron to, float w) {
+    public Connection(@NotNull INeuron from, @NotNull INeuron to, double w) {
         mRefFrom = from;
         mRefTo = to;
         mWeight = w;
@@ -29,11 +29,11 @@ public class Connection {
         return mRefTo;
     }
 
-    public float getWeight() {
+    public double getWeight() {
         return mWeight;
     }
 
-    public void updateWeight(float update) {
+    public void updateWeight(double update) {
         mWeight += update;
     }
 }

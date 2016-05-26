@@ -8,7 +8,7 @@ public class HiddenNeuron extends Neuron {
         super();
     }
 
-    public HiddenNeuron(float threshold) {
+    public HiddenNeuron(double threshold) {
         super(threshold);
     }
 }

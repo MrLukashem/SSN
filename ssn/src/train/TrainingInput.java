@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
  */
 public class TrainingInput <E> {
     private List<E> mInputs;
+
+    // at the moment, it uses as number of expected class/label class.
     private int mExpectedOutput = 0;
 
     private void checkInput(List<E> inputs) throws IllegalArgumentException {
