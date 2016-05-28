@@ -24,6 +24,7 @@ public class MainWindow extends JFrame {
     private JTextField mHLTextField;
     private JButton loadFileButton;
     private JTextField mTrainIterationsNumber;
+    private JButton mTrainWithMomentumButton;
     private InputHandler mInputHandler;
 
     private final static String APP_NAME = "SSN";
@@ -78,21 +79,11 @@ public class MainWindow extends JFrame {
         });
 
         trainButton.addActionListener(e -> {
-            int itr = 0;
-            int ni = 0;
+            triggerTraining(false);
+        });
 
-            try {
-                String n = mHLTextField.getText();
-                String iterations = mTrainIterationsNumber.getText();
-                ni = Integer.valueOf(n);
-                itr = Integer.valueOf(iterations);
-            } catch(Exception exc) {
-                JOptionPane.showMessageDialog(this, "Not valid input");
-                return;
-            }
-
-            ssn = new SSN(31 + 1 /* bias */, ni + 1 /* bias */, 8);
-            ssn.trainMe(inputs, itr);
+        mTrainWithMomentumButton.addActionListener(e -> {
+            triggerTraining(true);
         });
 
         loadFileButton.addActionListener(e -> {
@@ -107,6 +98,29 @@ public class MainWindow extends JFrame {
         computeButton.addActionListener(e -> {
             // to be filled.
         });
+    }
+
+    private void triggerTraining(boolean momentum) {
+        int itr = 0;
+        int ni = 0;
+
+        try {
+            String n = mHLTextField.getText();
+            String iterations = mTrainIterationsNumber.getText();
+            ni = Integer.valueOf(n);
+            itr = Integer.valueOf(iterations);
+        } catch(Exception exc) {
+            JOptionPane.showMessageDialog(this, "Not valid input");
+            return;
+        }
+
+        ssn = new SSN(31 + 1 /* bias */, ni + 1 /* bias */, 8);
+
+        if(momentum) {
+            ssn.trainMe(inputs, itr);
+        } else {
+            ssn.trainMeWithMomentum(inputs, itr);
+        }
     }
 
     private void createUIComponents() {

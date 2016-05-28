@@ -6,21 +6,24 @@ import com.sun.istack.internal.NotNull;
  * Created by mrlukashem on 22.05.16.
  */
 public class Connection {
-    INeuron mRefFrom;
-    INeuron mRefTo;
-    double mWeight;
-    double mUpdate;
-    double mDelta;
+    protected INeuron mRefFrom;
+    protected INeuron mRefTo;
+    protected double mWeight;
+    protected double mUpdate;
+    protected double mDelta;
+    protected double mLastWeight;
 
     public Connection(@NotNull INeuron from, @NotNull INeuron to) {
         mRefFrom = from;
         mRefFrom = to;
+        mLastWeight = 0;
     }
 
     public Connection(@NotNull INeuron from, @NotNull INeuron to, double w) {
         mRefFrom = from;
         mRefTo = to;
         mWeight = w;
+        mLastWeight = 0;
     }
 
     public INeuron getFrom() {
@@ -48,7 +51,11 @@ public class Connection {
     }
 
     public void commitUpdate() {
-      //  System.out.print(mUpdate + "  ");
+        mLastWeight = mWeight;
         mWeight += mUpdate;
+    }
+
+    public double getLastWeight() {
+        return mLastWeight;
     }
 }

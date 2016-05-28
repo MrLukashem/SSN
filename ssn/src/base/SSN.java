@@ -16,6 +16,8 @@ public class SSN {
     protected List<INeuron> mOutputsNeurons;
 
     protected double LEARNING_CONSTANT = .10;
+    protected double mMomentumRate = .5;
+    protected boolean mHasMomentum = false;
 
     private double getRandomWeight() {
         return Math.random() * 2.0 - 1.0;
@@ -68,6 +70,12 @@ public class SSN {
         initConnections(mHiddenNeurons, mOutputsNeurons);
     }
 
+    private void commitChanges() {
+        for (INeuron oNeuron : mOutputsNeurons) {
+            oNeuron.getConnections().forEach(Connection::commitUpdate);
+        }
+    }
+
     public SSN(int nInput, int nHidden, int nOutput) {
         init(nInput, nHidden, nOutput);
     }
@@ -94,8 +102,26 @@ public class SSN {
     }
 
     public void trainMe(List<TrainingInput<Double> > trainingInputs, int nor) {
+        mHasMomentum = false;
+        TrainMeCore(trainingInputs, nor);
+    }
+
+    public void trainMeWithMomentum(List<TrainingInput<Double> > trainingInputs, int nor) {
+        mHasMomentum = true;
+        TrainMeCore(trainingInputs, nor);
+    }
+
+    private double getMomentum(Connection connection) {
+        if (mHasMomentum) {
+            return mMomentumRate * (connection.getWeight() - connection.getLastWeight());
+        }
+
+        // momentum mode is disabled.
+        return .0;
+    }
+
+    private void TrainMeCore(List<TrainingInput<Double> > trainingInputs, int nor) {
         List<Connection> connections;
-        int numberOfRepeat = nor;
 
         for (int i = 0; i < nor; i++) {
             int randomIndex = (int)Math.abs(Math.random() * (double)(trainingInputs.size() - 1));
@@ -144,43 +170,13 @@ public class SSN {
 
                         INeuron from = connection.getFrom();
                         double dWeight = from.getOutput() * deltaHidden * LEARNING_CONSTANT;
-                        connection.updateWeight(dWeight);
+                        connection.updateWeight(dWeight + getMomentum(connection));
                         connection.commitUpdate();
                     }
                 }
             }
 
             commitChanges();
-        }
-    }
-
-    private void commitChanges() {
-        for (INeuron oNeuron : mOutputsNeurons) {
-            oNeuron.getConnections().forEach(Connection::commitUpdate);
-        }
-    }
-
-    public void showSSNOnConsole() {
-        for(INeuron hNeuron : mHiddenNeurons) {
-            hNeuron.getConnections().stream().forEach(x -> {
-                if (x.getTo() == hNeuron) {
-                    System.out.print(" " + x.getWeight());
-                }
-            });
-            System.out.println("");
-        }
-
-        System.out.println("");
-        System.out.println("");
-        System.out.println("");
-
-        for(INeuron oNeuron : mOutputsNeurons) {
-            oNeuron.getConnections().stream().forEach(x -> {
-                if (x.getTo() == oNeuron) {
-                    System.out.print(" " + x.getWeight());
-                }
-            });
-            System.out.println("");
         }
     }
 }
