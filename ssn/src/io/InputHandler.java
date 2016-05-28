@@ -59,4 +59,14 @@ public class InputHandler {
         // trigger client's callback.
         mReceiver.handler(content);
     }
+
+    public void pullData(String path) throws IOException {
+        mHandle = new File(path);
+
+        if (!mHandle.canRead()) {
+            throw new IOException();
+        }
+
+        pullData();
+    }
 }

@@ -9,6 +9,8 @@ public class Connection {
     INeuron mRefFrom;
     INeuron mRefTo;
     double mWeight;
+    double mUpdate;
+    double mDelta;
 
     public Connection(@NotNull INeuron from, @NotNull INeuron to) {
         mRefFrom = from;
@@ -34,6 +36,19 @@ public class Connection {
     }
 
     public void updateWeight(double update) {
-        mWeight += update;
+        mUpdate = update;
+    }
+
+    public void setDelta(double delta) {
+        mDelta = delta;
+    }
+
+    public double getDelta() {
+        return mDelta;
+    }
+
+    public void commitUpdate() {
+      //  System.out.print(mUpdate + "  ");
+        mWeight += mUpdate;
     }
 }

@@ -22,27 +22,7 @@ public class Main {
         return 2 * x + 1;
     }
 
-    public static void main(String[] args) {
-       // MainWindow mainWindow = new MainWindow();
-        try {
-            InputHandler inputHandler = new InputHandler("/home/mrlukashem/Pulpit/testingData");
-            inputHandler.setContentReceiver(x -> {
-                List<TrainingInput<Double> > inputs = x;
-
-                SSN ssn = new SSN(31 + 1 /* bias */, 8 + 1 /* bias */, 8);
-                List<Double> r1 = ssn.pushInput(inputs.get(0).getInputs());
-                ssn.trainMe(inputs);
-
-                for (TrainingInput<Double> test : inputs) {
-                    List<Double> r2 = ssn.pushInput(test.getInputs());
-                    List<Double> e = r1;
-                }
-
-         //       ssn.showSSNOnConsole();
-            });
-            inputHandler.pullData();
-        } catch (IOException e) {
-
-        }
+    public static void main(String[] args) throws IOException {
+        MainWindow mainWindow = new MainWindow();
     }
 }
