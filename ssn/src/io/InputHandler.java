@@ -3,6 +3,7 @@ package io;
 import com.sun.istack.internal.NotNull;
 import train.TrainingInput;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class InputHandler {
 
     public InputHandler(@NotNull String fileName) throws IOException {
         mHandle = new File(fileName);
-
+        JOptionPane.showMessageDialog(null, mHandle.getName());
         if (!mHandle.canRead()) {
             throw new IOException();
         }
@@ -35,7 +36,7 @@ public class InputHandler {
 
     public void pullData() throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(mHandle));
-
+    JOptionPane.showMessageDialog(null, "QWEQWEWQE");
         String line;
         List<TrainingInput<Double> > content = new ArrayList<>();
         ArrayList<Double> inputs = new ArrayList<>();
@@ -62,8 +63,10 @@ public class InputHandler {
 
     public void pullData(String path) throws IOException {
         mHandle = new File(path);
+        JOptionPane.showMessageDialog(null, mHandle.getName());
 
         if (!mHandle.canRead()) {
+            JOptionPane.showMessageDialog(null, "exception!");
             throw new IOException();
         }
 

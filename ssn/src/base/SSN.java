@@ -5,7 +5,9 @@ import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import train.TrainingInput;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by mrlukashem on 21.05.16.
@@ -15,8 +17,8 @@ public class SSN {
     protected List<INeuron> mHiddenNeurons;
     protected List<INeuron> mOutputsNeurons;
 
-    protected double LEARNING_CONSTANT = .10;
-    protected double mMomentumRate = .5;
+    protected double LEARNING_CONSTANT = .4;
+    protected double mMomentumRate = .25;
     protected boolean mHasMomentum = false;
 
     private double getRandomWeight() {
@@ -101,9 +103,17 @@ public class SSN {
         return result;
     }
 
+    public void trainMe(List<TrainingInput<Double> > trainingInputs) {
+        trainMe(trainingInputs, 1 /* Single training mode. */);
+    }
+
     public void trainMe(List<TrainingInput<Double> > trainingInputs, int nor) {
         mHasMomentum = false;
         TrainMeCore(trainingInputs, nor);
+    }
+
+    public void trainMeWithMomentum(List<TrainingInput<Double> > trainingInputs) {
+        trainMeWithMomentum(trainingInputs, 1 /* Single training mode. */);
     }
 
     public void trainMeWithMomentum(List<TrainingInput<Double> > trainingInputs, int nor) {
@@ -113,7 +123,8 @@ public class SSN {
 
     private double getMomentum(Connection connection) {
         if (mHasMomentum) {
-            return mMomentumRate * (connection.getWeight() - connection.getLastWeight());
+            if (connection.getLastWeight() != .0)
+                return mMomentumRate * (connection.getWeight() - connection.getLastWeight());
         }
 
         // momentum mode is disabled.
@@ -122,10 +133,16 @@ public class SSN {
 
     private void TrainMeCore(List<TrainingInput<Double> > trainingInputs, int nor) {
         List<Connection> connections;
+        List<TrainingInput<Double> > tempTrainingInputs = new LinkedList<>(trainingInputs);
 
-        for (int i = 0; i < nor; i++) {
-            int randomIndex = (int)Math.abs(Math.random() * (double)(trainingInputs.size() - 1));
-            TrainingInput<Double> ti = trainingInputs.get(randomIndex);
+        Random random = new Random();
+        int randomIndex = 0;
+        while (tempTrainingInputs.size() > 0){
+            randomIndex = 0;
+            if (tempTrainingInputs.size() > 1) {
+                randomIndex = random.nextInt(tempTrainingInputs.size() - 1);
+            }
+            TrainingInput<Double> ti = tempTrainingInputs.remove(randomIndex);
             List<Double> ssnAnswers = pushInput(ti.getInputs());
 
             // for every output neuron back propagation.
@@ -145,10 +162,10 @@ public class SSN {
                 for (Connection connection : connections) {
                     double output = connection.getFrom().getOutput();
                     double dWeight = (output * delta * LEARNING_CONSTANT);
-                    connection.updateWeight(dWeight);
+                    connection.updateWeight(dWeight + getMomentum(connection));
                     connection.setDelta(delta);
                 }
-                outputNeuronNumber++;
+                ++outputNeuronNumber;
             }
 
             for (INeuron neuron : mHiddenNeurons) {
